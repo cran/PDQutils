@@ -21,113 +21,6 @@
 # Author: Steven E. Pav
 # Comments: Steven E. Pav
 
-# for the Hermite Polynomials
-require(orthopolynom)
-require(moments)
-
-#' @title Approximate density and distribution via Gram-Charlier A expansion.
-#'
-#' @description 
-#'
-#' Approximate the probability density or cumulative distribution function of a distribution via its raw moments.
-#'
-#' @template details-gca
-#'
-#' @usage
-#'
-#' dapx_gca(x, raw.moments, log=FALSE)
-#'
-#' papx_gca(q, raw.moments, lower.tail=TRUE, log.p=FALSE)
-#'
-#' @param x where to evaluate the approximate density.
-#' @param q where to evaluate the approximate distribution.
-#' @param raw.moments an atomic array of the 1st through kth raw moments
-#' of the probability distribution. 
-#' @param log logical; if TRUE, densities \eqn{f} are given 
-#'  as \eqn{\mbox{log}(f)}{log(f)}.
-#' @param log.p logical; if TRUE, probabilities p are given 
-#'  as \eqn{\mbox{log}(p)}{log(p)}.
-#' @param lower.tail whether to compute the lower tail. If false, we approximate the survival function.
-#' @return The approximate density at \code{x}, or the approximate CDF at
-#' \code{q}.
-#'
-#' @keywords distribution 
-#' @seealso \code{\link{qapx_cf}}
-#' @export 
-#' @template ref-Jaschke
-#' @template ref-Blinnikov
-#' @aliases papx_gca 
-#' @examples 
-#' # normal distribution:
-#' xvals <- seq(-2,2,length.out=501)
-#' d1 <- dapx_gca(xvals, c(0,1,0,3,0))
-#' d2 <- dnorm(xvals)
-#' d1 - d2
-#'
-#' qvals <- seq(-2,2,length.out=501)
-#' p1 <- papx_gca(qvals, c(0,1,0,3,0))
-#' p2 <- pnorm(qvals)
-#' p1 - p2
-#' @template etc
-dapx_gca <- function(x,raw.moments,log=FALSE) {#FOLDUP
-	order.max <- length(raw.moments)
-
-	# standardize the distribution 
-	mu.central <- moments::raw2central(c(1,raw.moments))
-	mu.std <- central2std(mu.central)
-	eta <- (x - raw.moments[1]) / sqrt(mu.central[3])
-	hermi <- orthopolynom::hermite.he.polynomials(order.max+1, normalized=FALSE)
-
-	retval <- dnorm(eta)
-	phi.eta <- retval
-	for (iii in c(1:order.max)) {
-		ci <- (sum(coef(hermi[[iii+1]]) * mu.std[1:(iii+1)])) / factorial(iii)
-		retval <- retval - ci * phi.eta * as.function(hermi[[iii+1]])(eta)
-	}
-
-	# adjust back from standardized
-	retval <- retval / sqrt(mu.central[3])
-
-	# sanity check; shall I throw a warning?
-	retval <- pmax(0,retval)
-
-	# must be a better way to do this ... 
-	if (log)
-		retval <- log(retval)
-	return(retval)
-}#UNFOLD
-#' @export 
-papx_gca <- function(q,raw.moments,lower.tail=TRUE,log.p=FALSE) {#FOLDUP
-	order.max <- length(raw.moments)
-
-	# 2FIX: would it not be better to pass lower.tail to pnorm and dnorm below?
-	# or subtract 1 from the end result?
-	if (!lower.tail) {
-		# transform q and the raw moments
-		q <- - q;
-		raw.moments <- raw.moments * (-1^(1:order.max))
-	}
-
-	mu.central <- moments::raw2central(c(1,raw.moments))
-	mu.std <- central2std(mu.central)
-	eta <- (q - raw.moments[1]) / sqrt(mu.central[3])
-	hermi <- orthopolynom::hermite.he.polynomials(order.max, normalized=FALSE)
-
-	retval <- pnorm(eta)
-	phi.eta <- dnorm(eta)
-	for (iii in c(1:order.max)) {
-		ci <- (sum(coef(hermi[[iii+1]]) * mu.std[1:(iii+1)])) / factorial(iii)
-		retval <- retval - ci * phi.eta * as.function(hermi[[iii]])(eta)
-	}
-	# sanity check; shall I throw a warning?
-	retval <- pmin(1,pmax(0,retval))
-
-	# must be a better way to do this ... 
-	if (log.p)
-		retval <- log(retval)
-	return(retval)
-}#UNFOLD
-
 #' @title Higher order Cornish Fisher approximation.
 #'
 #' @description 
@@ -296,20 +189,24 @@ AS269 <- function(z,cumul,order.max=NULL,all.ords=FALSE) {#FOLDUP
 #'
 #' @usage
 #'
-#' qapx_cf(p, raw.cumulants, lower.tail = TRUE, log.p = FALSE)
+#' qapx_cf(p, raw.cumulants, support=c(-Inf,Inf), lower.tail = TRUE, log.p = FALSE)
 #'
 #' @param p where to evaluate the approximate distribution.
 #' @param raw.cumulants an atomic array of the 1st through kth raw cumulants. The first 
 #' value is the mean of the distribution, the second should
 #' be the variance of the distribution, the remainder are raw cumulants.
 #' @inheritParams dapx_gca
-#' @return The approximate quantile at \code{x}.
+#' @return The approximate quantile at \code{p}.
 #'
 #' @keywords distribution 
 #' @seealso \code{\link{dapx_gca}, \link{papx_gca}, \link{AS269}, \link{rapx_cf}}
 #' @export 
 #' @template ref-AS269
 #' @template ref-Jaschke
+#' @note 
+#'
+#' Monotonicity of the quantile function is not guaranteed.
+#'
 #' @examples 
 #' # normal distribution:
 #' pvals <- seq(0.001,0.999,length.out=501)
@@ -317,7 +214,7 @@ AS269 <- function(z,cumul,order.max=NULL,all.ords=FALSE) {#FOLDUP
 #' q2 <- qnorm(pvals)
 #' q1 - q2
 #' @template etc
-qapx_cf <- function(p,raw.cumulants,lower.tail=TRUE,log.p=FALSE) {#FOLDUP
+qapx_cf <- function(p,raw.cumulants,support=c(-Inf,Inf),lower.tail=TRUE,log.p=FALSE) {#FOLDUP
 	order.max <- length(raw.cumulants)
 	# this should be a standard routine:
 	std.cumulants <- raw.cumulants / (raw.cumulants[2] ^ ((1:order.max)/2.0))
@@ -331,6 +228,15 @@ qapx_cf <- function(p,raw.cumulants,lower.tail=TRUE,log.p=FALSE) {#FOLDUP
 	retval <- raw.cumulants[1] + z * sqrt(raw.cumulants[2])
 	# may have been converted to a matrix. fix that.
 	dim(retval) <- dim(p)
+
+	# support support
+	if (is.finite(min(support))) {
+		retval <- pmax(retval,min(support))
+	}
+	if (is.finite(max(support))) {
+		retval <- pmin(retval,max(support))
+	}
+
 	return(retval)
 }#UNFOLD
 
@@ -347,7 +253,7 @@ qapx_cf <- function(p,raw.cumulants,lower.tail=TRUE,log.p=FALSE) {#FOLDUP
 #'
 #' @usage
 #'
-#' rapx_cf(n, raw.cumulants)
+#' rapx_cf(n, raw.cumulants, support=c(-Inf,Inf))
 #'
 #' @param n number of observations. If 'length(n) > 1', the length is
 #' taken to be the number required.
@@ -361,9 +267,9 @@ qapx_cf <- function(p,raw.cumulants,lower.tail=TRUE,log.p=FALSE) {#FOLDUP
 #' # normal distribution:
 #' r1 <- rapx_cf(1000, c(0,1,0,0,0,0,0))
 #' @template etc
-rapx_cf <- function(n,raw.cumulants) {#FOLDUP
+rapx_cf <- function(n,raw.cumulants, support=c(-Inf,Inf)) {#FOLDUP
 	p <- runif(n)
-	retval <- qapx_cf(p,raw.cumulants)
+	retval <- qapx_cf(p=p,raw.cumulants=raw.cumulants,support=support)
 	return(retval)
 }#UNFOLD
 
