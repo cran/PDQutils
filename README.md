@@ -3,6 +3,7 @@
 # PDQutils
 
 [![Build Status](https://travis-ci.org/shabbychef/PDQutils.png)](https://travis-ci.org/shabbychef/PDQutils)
+[![codecov.io](http://codecov.io/github/shabbychef/PDQutils/coverage.svg?branch=master)](http://codecov.io/github/shabbychef/PDQutils?branch=master)
 
 PDQ Functions via Gram Charlier, Edgeworth, and Cornish Fisher Approximations
 
@@ -10,20 +11,24 @@ PDQ Functions via Gram Charlier, Edgeworth, and Cornish Fisher Approximations
 
 ## Installation
 
-This package may be installed from CRAN; the latest version may be
-found on [github](https://www.github.com/shabbychef/PDQutils "PDQutils")
-via devtools, or installed via [drat](https://github.com/eddelbuettel/drat "drat"):
+This package may be installed from CRAN; the latest development version may be
+installed via [drat](https://github.com/eddelbuettel/drat "drat"), or built from
+[github](https://www.github.com/shabbychef/PDQutils "PDQutils"):
 
 
 ```r
-if (require(devtools)) {
-    # latest greatest
-    install_github("shabbychef/PDQutils")
-}
-# via drat:
+# install via CRAN:
+install.packages("PDQutils")
+
+# get latest dev release via drat:
 if (require(drat)) {
     drat:::add("shabbychef")
     install.packages("PDQutils")
+}
+
+# get snapshot from github (may be buggy)
+if (require(devtools)) {
+    install_github("shabbychef/PDQutils")
 }
 ```
 
@@ -59,8 +64,16 @@ dfs <- c(8, 15, 4000, 10000)
 set.seed(18181)
 # now draw from the distribution
 rvs <- rsnak(n.samp, dfs)
-qqnorm(rvs)
-qqline(rvs, col = "red")
+
+data <- data.frame(draws = rvs)
+mu <- mean(rvs)
+sigma <- sd(rvs)
+library(ggplot2)
+ph <- ggplot(data, aes(sample = draws)) + stat_qq(dist = function(p) {
+    qnorm(p, mean = mu, sd = sigma)
+}) + geom_abline(slope = 1, intercept = 0, colour = "red") + 
+    theme(text = element_text(size = 8)) + labs(title = "Q-Q plot (against normality)")
+print(ph)
 ```
 
 <img src="github_extra/figure/testit-1.png" title="plot of chunk testit" alt="plot of chunk testit" width="600px" height="500px" />
@@ -150,9 +163,13 @@ The q-q plot looks better now:
 
 
 ```r
-qqplot(qsnak(ppoints(n.samp), dfs = dfs), rvs, main = "Q-Q against qsnak (C-F appx.)")
-qqline(rvs, distribution = function(p) qsnak(p, dfs), 
-    col = "red")
+data <- data.frame(draws = rvs)
+library(ggplot2)
+ph <- ggplot(data, aes(sample = draws)) + stat_qq(dist = function(p) {
+    qsnak(p, dfs = dfs)
+}) + geom_abline(slope = 1, intercept = 0, colour = "red") + 
+    theme(text = element_text(size = 8)) + labs(title = "Q-Q against qsnak (C-F appx.)")
+print(ph)
 ```
 
 <img src="github_extra/figure/improvedqq-1.png" title="plot of chunk improvedqq" alt="plot of chunk improvedqq" width="600px" height="500px" />
@@ -244,4 +261,50 @@ print(ph)
 ```
 
 <img src="github_extra/figure/chitwo-1.png" title="plot of chunk chitwo" alt="plot of chunk chitwo" width="600px" height="500px" />
+
+# Rearranging for monotonicity 
+
+In one of a series of papers, [Chernozhukov et. al.](http://arxiv.org/abs/0708.1627 "Chernozhukov et. al.") 
+demonstrate the use of monotonic rearrangements in Edgeworth and Cornish-Fisher expansions of the CDF
+and quantile functions, which are, by definition, non-decreasing. It is shown that monotone rearrangement
+reduces the error of an initial approximation. This is easy enough to code with tools readily available
+in R.  First, let us compute the 8 term Gram Charlier approximation to the CDF of the Chi-square with
+5 degrees of freedom. This should display non-monotonicity. Then we compute the monotonic rearrangement:
+
+
+```r
+df <- 5
+max.ord <- 20
+subords <- 0:(max.ord - 1)
+raw.cumulants <- df * (2^subords) * factorial(subords)
+raw.moments <- cumulant2moment(raw.cumulants)
+
+# compute the CDF of the rescaled variable:
+xvals <- seq(-sqrt(df/2) * 0.99, 6, length.out = 1001)
+chivals <- sqrt(2 * df) * xvals + df
+cdf.true <- pchisq(chivals, df = df)
+cdf.gca8 <- papx_gca(chivals, raw.moments = raw.moments[1:8], 
+    support = c(0, Inf))
+
+# it is this simple:
+require(quantreg)
+in.fn <- stepfun(xvals, c(0, cdf.gca8))
+out.fn <- rearrange(in.fn)
+cdf.rearranged <- out.fn(xvals)
+
+all.cdf <- data.frame(x = xvals, true = cdf.true, gca8 = cdf.gca8, 
+    rearranged = cdf.rearranged)
+
+# plot it by reshaping and ggplot'ing
+require(reshape2)
+arr.data <- melt(all.cdf, id.vars = "x", variable.name = "cdf", 
+    value.name = "density")
+
+require(ggplot2)
+ph <- ggplot(arr.data, aes(x = x, y = density, group = cdf, 
+    colour = cdf)) + geom_line()
+print(ph)
+```
+
+<img src="github_extra/figure/chithree-1.png" title="plot of chunk chithree" alt="plot of chunk chithree" width="600px" height="500px" />
 
