@@ -4,6 +4,8 @@
 
 [![Build Status](https://travis-ci.org/shabbychef/PDQutils.png)](https://travis-ci.org/shabbychef/PDQutils)
 [![codecov.io](http://codecov.io/github/shabbychef/PDQutils/coverage.svg?branch=master)](http://codecov.io/github/shabbychef/PDQutils?branch=master)
+[![CRAN](http://www.r-pkg.org/badges/version/PDQutils)](http://cran.rstudio.com/package=PDQutils) 
+[![Downloads](http://cranlogs.r-pkg.org/badges/PDQutils?color=brightgreen)](http://www.r-pkg.org/pkg/PDQutils)
 
 PDQ Functions via Gram Charlier, Edgeworth, and Cornish Fisher Approximations
 
@@ -182,7 +184,8 @@ it is:
 ```r
 apx.p <- psnak(rvs, dfs = dfs)
 if (require(ggplot2)) {
-    qplot(apx.p, stat = "ecdf", geom = "step")
+    # qplot(apx.p, stat='ecdf', geom='step')
+    ggplot(data.frame(pv = apx.p), aes(x = pv)) + stat_ecdf(geom = "step")
 }
 ```
 

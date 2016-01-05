@@ -144,7 +144,7 @@ print(ph)
 
 apx.p <- psnak(rvs,dfs=dfs)
 require(ggplot2)
-ph <- qplot(apx.p, stat="ecdf", geom="step")
+ph <- ggplot(data.frame(pv=apx.p),aes(x=pv)) + stat_ecdf(geom='step')
 print(ph)
 
 ## ----'chisetup',eval=TRUE,echo=TRUE,fig.width=4.5,fig.height=4,fig.scap=NA,fig.cap="The true PDF of a normalized $\\chi^2_5$ distribution is shown, along with the 2- and 6-term Gram Charlier approximations. This replicates Figure 1 of Blinnikov and Moessner. \\cite{1998A&AS..130..193B}"----
