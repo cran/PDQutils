@@ -7,9 +7,25 @@
 News for package \sQuote{PDQutils}.
 
 \newcommand{\pkg}{#1}
-\newcommand{\CRANpkg}{\href{http://CRAN.R-project.org/package=#1}{\pkg{#1}}}
+\newcommand{\CRANpkg}{\href{https://cran.r-project.org/package=#1}{\pkg{#1}}}
 \newcommand{\PDQutils}{\CRANpkg{PDQutils}}
 }
+\section{\PDQutils{} Version 0.1.5 (2016-09-18) }{
+
+\itemize{
+\item Package maintenance--no new features.
+\item Remove errant files from test directory.
+}
+}
+
+\section{\PDQutils{} Version 0.1.4 (2016-03-03) }{
+
+\itemize{
+\item Package maintenance--no new features.
+\item Incompatibilities in vignette with ggplot2 release.
+}
+}
+
 \section{\PDQutils{} Version 0.1.3 (2016-01-04) }{
 
 \itemize{

@@ -4,8 +4,9 @@
 
 [![Build Status](https://travis-ci.org/shabbychef/PDQutils.png)](https://travis-ci.org/shabbychef/PDQutils)
 [![codecov.io](http://codecov.io/github/shabbychef/PDQutils/coverage.svg?branch=master)](http://codecov.io/github/shabbychef/PDQutils?branch=master)
-[![CRAN](http://www.r-pkg.org/badges/version/PDQutils)](http://cran.rstudio.com/package=PDQutils) 
-[![Downloads](http://cranlogs.r-pkg.org/badges/PDQutils?color=brightgreen)](http://www.r-pkg.org/pkg/PDQutils)
+[![CRAN](http://www.r-pkg.org/badges/version/PDQutils)](https://cran.r-project.org/package=PDQutils)
+[![Downloads](http://cranlogs.r-pkg.org/badges/PDQutils?color=green)](http://www.r-pkg.org/pkg/PDQutils)
+[![Total](http://cranlogs.r-pkg.org/badges/grand-total/PDQutils?color=green)](http://www.r-pkg.org/pkg/PDQutils)
 
 PDQ Functions via Gram Charlier, Edgeworth, and Cornish Fisher Approximations
 
@@ -71,7 +72,7 @@ data <- data.frame(draws = rvs)
 mu <- mean(rvs)
 sigma <- sd(rvs)
 library(ggplot2)
-ph <- ggplot(data, aes(sample = draws)) + stat_qq(dist = function(p) {
+ph <- ggplot(data, aes(sample = draws)) + stat_qq(distribution = function(p) {
     qnorm(p, mean = mu, sd = sigma)
 }) + geom_abline(slope = 1, intercept = 0, colour = "red") + 
     theme(text = element_text(size = 8)) + labs(title = "Q-Q plot (against normality)")
@@ -167,7 +168,7 @@ The q-q plot looks better now:
 ```r
 data <- data.frame(draws = rvs)
 library(ggplot2)
-ph <- ggplot(data, aes(sample = draws)) + stat_qq(dist = function(p) {
+ph <- ggplot(data, aes(sample = draws)) + stat_qq(distribution = function(p) {
     qsnak(p, dfs = dfs)
 }) + geom_abline(slope = 1, intercept = 0, colour = "red") + 
     theme(text = element_text(size = 8)) + labs(title = "Q-Q against qsnak (C-F appx.)")
