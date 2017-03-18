@@ -2,8 +2,8 @@ Package: PDQutils
 Maintainer: Steven E. Pav <shabbychef@gmail.com>
 Authors@R: c(person(c("Steven", "E."), "Pav", role=c("aut","cre"),
     email="shabbychef@gmail.com"))
-Version: 0.1.5
-Date: 2016-09-18
+Version: 0.1.6
+Date: 2017-03-17
 License: LGPL-3
 Title: PDQ Functions via Gram Charlier, Edgeworth, and Cornish Fisher
         Approximations
@@ -21,7 +21,7 @@ Collate: 'cornish_fisher.r' 'edgeworth.r' 'gram_charlier.r' 'moments.r'
         'PDQutils.r'
 RoxygenNote: 5.0.1
 NeedsCompilation: no
-Packaged: 2016-09-20 04:34:00 UTC; spav
+Packaged: 2017-03-18 03:55:40 UTC; spav
 Author: Steven E. Pav [aut, cre]
 Repository: CRAN
-Date/Publication: 2016-09-20 07:54:01
+Date/Publication: 2017-03-18 08:37:53 UTC
